@@ -19,6 +19,29 @@ public class BoardController {
     private final BoardRepository boardRepository;
     private final HttpSession session;
 
+    @PostMapping("/board/{id}/delete")
+    public String delete(@PathVariable int id, HttpServletRequest request) {
+        User sessionUser = (User) session.getAttribute("sessionUser");
+
+        // 1. 인증 안되면 막기
+        if (sessionUser == null) { // 401
+            return "redirect:/loginForm";
+        }
+
+        // 2. 권환 없으면 막기
+        Board board = boardRepository.findById(id);
+        // 작성자 id != 로그인한 사람의 id
+        if (board.getUserId() != sessionUser.getId()) {
+            request.setAttribute("status", 403);
+            request.setAttribute("msg", "게시글을 삭제할 권한이 없습니다.");
+            return "error/40x"; // 리다이렉트 하면 리퀘스트에 적은 내용이 사라진다.(하면 안된다)
+        }
+
+        boardRepository.deleteById(id);
+
+        return "redirect:/";
+    }
+
     @PostMapping("/board/save")
     public String save(BoardRequest.SaveDTO requestDTO, HttpServletRequest request) {
         // 1. 인증 체크
@@ -65,12 +88,27 @@ public class BoardController {
 
     @GetMapping("/board/{id}")
     public String detail(@PathVariable int id, HttpServletRequest request) {
-        System.out.println("id : "+id);
 
+        // 1. 모델 진입 : 상세보기 데이터 가져오기
         // 바디 데이터가 없으면 유효성 검사가 필요없지 ㅎ
-        BoardResponse.DetailDTO responseDTO = boardRepository.findById(id);
+        BoardResponse.DetailDTO responseDTO = boardRepository.findByIdWithUser(id);
+
+        // 2. 페이지 주인 여부 체크 (board의 userId와 sessionUser의 id를 비교)
+        boolean pageOwner = false;
+        User sessionUser = (User) session.getAttribute("sessionUser");
+
+        // sessionUser을 비교해서 로그인 한 상태인지 확인 (로그인 안햇으면 null값일것)
+        // 이렇게 해야 상세보기 할 때 null들어가서 오류 나는거 막음
+        if (sessionUser != null) {
+            // sessionUser의 값이 null이 아닐 때 만 if문 동작시킴
+            // 비교하고자 하는 데이터의 값이 같은지 확인 하여야 한다.
+            if(sessionUser.getId() == responseDTO.getUserId()) {
+                pageOwner = true;
+            }
+        }
 
         request.setAttribute("board", responseDTO);
+        request.setAttribute("pageOwner", pageOwner);
         return "board/detail";
     }
 }
