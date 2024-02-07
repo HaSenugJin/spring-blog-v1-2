@@ -19,6 +19,29 @@ public class BoardController {
     private final BoardRepository boardRepository;
     private final HttpSession session;
 
+    @GetMapping("/board/{id}/updateForm")
+    public String updateForm(@PathVariable int id, HttpServletRequest request) {
+        User sessionUser = (User) session.getAttribute("sessionUser");
+
+        // 인증 체크
+        if (sessionUser == null) {
+            return "redirect:/loginForm";
+        }
+
+        // 모델 위임 (id로 board를 조회)
+        Board board = boardRepository.findById(id);
+
+        // 권한 체크
+        if (board.getUserId() != sessionUser.getId()) {
+            return "error/403";
+        }
+
+        // 가방에 담기
+        request.setAttribute("board", board);
+
+        return "board/updateForm";
+    }
+
     @PostMapping("/board/{id}/delete")
     public String delete(@PathVariable int id, HttpServletRequest request) {
         User sessionUser = (User) session.getAttribute("sessionUser");
