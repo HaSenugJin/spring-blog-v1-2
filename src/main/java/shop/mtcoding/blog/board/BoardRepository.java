@@ -71,4 +71,13 @@ public class BoardRepository {
         query.setParameter(1, id);
         query.executeUpdate();
     }
+
+    @Transactional // 쓰기에는 이거 꼭 써야함 안쓰면 터짐 좀 그만 까먹으셈 진짜로
+    public void update(BoardRequest.UpdateDTO requestDTO, int id) {
+        Query query = em.createNativeQuery("update board_tb set title = ?, content = ? where id = ?");
+        query.setParameter(1, requestDTO.getTitle());
+        query.setParameter(2, requestDTO.getContent());
+        query.setParameter(3, id);
+        query.executeUpdate();
+    }
 }

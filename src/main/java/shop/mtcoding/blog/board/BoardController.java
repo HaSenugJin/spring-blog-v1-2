@@ -4,10 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import shop.mtcoding.blog.user.User;
 
 import java.util.List;
@@ -19,19 +16,43 @@ public class BoardController {
     private final BoardRepository boardRepository;
     private final HttpSession session;
 
+    // @RequestBody BoardRequest.UpdateDTO : json데이터를 받을 수 있음
+    // @RequestBody String : 평문
+    @PostMapping("/board/{id}/update")
+    public String update(@PathVariable int id, BoardRequest.UpdateDTO requestDTO) {
+        // 1. 인증 체크
+        User sessionUser = (User) session.getAttribute("sessionUser");
+        if (sessionUser == null) {
+            return "redirect:/loginForm";
+        }
+
+        // 모델 위임
+        // 2. 권한 체크
+        Board board = boardRepository.findById(id);
+
+        if (board.getUserId() != sessionUser.getId()) {
+            return "error/403";
+        }
+
+        // 3. 핵심 로직
+        // update board_tb set title = ?, content = ? where id = ?;
+        boardRepository.update(requestDTO, id);
+
+        return "redirect:/board/"+id;
+    }
+
     @GetMapping("/board/{id}/updateForm")
     public String updateForm(@PathVariable int id, HttpServletRequest request) {
-        User sessionUser = (User) session.getAttribute("sessionUser");
-
         // 인증 체크
+        User sessionUser = (User) session.getAttribute("sessionUser");
         if (sessionUser == null) {
             return "redirect:/loginForm";
         }
 
         // 모델 위임 (id로 board를 조회)
+        // 권한 체크
         Board board = boardRepository.findById(id);
 
-        // 권한 체크
         if (board.getUserId() != sessionUser.getId()) {
             return "error/403";
         }
