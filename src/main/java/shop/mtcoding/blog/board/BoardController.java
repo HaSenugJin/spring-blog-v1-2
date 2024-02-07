@@ -95,7 +95,6 @@ public class BoardController {
         }
 
         // 2. 바디 데이터 확인 및 유효성 검사
-        System.out.println(requestDTO);
         if (requestDTO.getTitle().length() > 30) {
             request.setAttribute("status", 400);
             request.setAttribute("msg", "title의 길이가 30자를 초과해선 안됩니다.");

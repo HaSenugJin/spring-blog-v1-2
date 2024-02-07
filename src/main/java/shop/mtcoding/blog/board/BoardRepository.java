@@ -24,7 +24,6 @@ public class BoardRepository {
 
         Board board = (Board) query.getSingleResult();
         return board;
-
     }
 
     public BoardResponse.DetailDTO findByIdWithUser(int idx) {
