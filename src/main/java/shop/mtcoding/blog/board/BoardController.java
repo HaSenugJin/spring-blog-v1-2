@@ -3,8 +3,10 @@ package shop.mtcoding.blog.board;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import shop.mtcoding.blog._core.config.security.MyLoginUser;
 import shop.mtcoding.blog.user.User;
 
 import java.util.List;
@@ -22,9 +24,6 @@ public class BoardController {
     public String update(@PathVariable int id, BoardRequest.UpdateDTO requestDTO) {
         // 1. 인증 체크
         User sessionUser = (User) session.getAttribute("sessionUser");
-        if (sessionUser == null) {
-            return "redirect:/loginForm";
-        }
 
         // 모델 위임
         // 2. 권한 체크
@@ -45,9 +44,6 @@ public class BoardController {
     public String updateForm(@PathVariable int id, HttpServletRequest request) {
         // 인증 체크
         User sessionUser = (User) session.getAttribute("sessionUser");
-        if (sessionUser == null) {
-            return "redirect:/loginForm";
-        }
 
         // 모델 위임 (id로 board를 조회)
         // 권한 체크
@@ -67,11 +63,6 @@ public class BoardController {
     public String delete(@PathVariable int id, HttpServletRequest request) {
         User sessionUser = (User) session.getAttribute("sessionUser");
 
-        // 1. 인증 안되면 막기
-        if (sessionUser == null) { // 401
-            return "redirect:/loginForm";
-        }
-
         // 2. 권환 없으면 막기
         Board board = boardRepository.findById(id);
         // 작성자 id != 로그인한 사람의 id
@@ -90,9 +81,6 @@ public class BoardController {
     public String save(BoardRequest.SaveDTO requestDTO, HttpServletRequest request) {
         // 1. 인증 체크
         User sessionUser = (User) session.getAttribute("sessionUser");
-        if (sessionUser == null) {
-            return "redirect:/loginForm";
-        }
 
         // 2. 바디 데이터 확인 및 유효성 검사
         if (requestDTO.getTitle().length() > 30) {
@@ -108,8 +96,9 @@ public class BoardController {
         return "redirect:/";
     }
 
-    @GetMapping({ "/", "/board" })
-    public String index(HttpServletRequest request) {
+    @GetMapping({"/"})
+    public String index(HttpServletRequest request, @AuthenticationPrincipal MyLoginUser myLoginUser) {
+        System.out.println("로그인 되었나? : " + myLoginUser.getUsername());
         request.getSession();
         List<Board> boardList = boardRepository.findAll();
         request.setAttribute("boardList", boardList);
@@ -122,9 +111,6 @@ public class BoardController {
 
         // 글쓰기 페이지 인증체크
         User sessionUser = (User) session.getAttribute("sessionUser");
-        if(sessionUser == null) {
-            return "redirect:/loginForm";
-        }
 
         return "board/saveForm";
     }
