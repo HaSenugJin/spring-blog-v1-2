@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import shop.mtcoding.blog._core.config.security.MyLoginUser;
@@ -18,18 +19,16 @@ public class BoardController {
     private final BoardRepository boardRepository;
     private final HttpSession session;
 
+
     // @RequestBody BoardRequest.UpdateDTO : json데이터를 받을 수 있음
     // @RequestBody String : 평문
     @PostMapping("/board/{id}/update")
-    public String update(@PathVariable int id, BoardRequest.UpdateDTO requestDTO) {
-        // 1. 인증 체크
-        User sessionUser = (User) session.getAttribute("sessionUser");
-
+    public String update(@PathVariable int id, BoardRequest.UpdateDTO requestDTO, @AuthenticationPrincipal MyLoginUser myLoginUser) {
         // 모델 위임
         // 2. 권한 체크
         Board board = boardRepository.findById(id);
 
-        if (board.getUserId() != sessionUser.getId()) {
+        if (board.getUserId() != myLoginUser.getUser().getId()) {
             return "error/403";
         }
 
@@ -41,15 +40,13 @@ public class BoardController {
     }
 
     @GetMapping("/board/{id}/updateForm")
-    public String updateForm(@PathVariable int id, HttpServletRequest request) {
-        // 인증 체크
-        User sessionUser = (User) session.getAttribute("sessionUser");
+    public String updateForm(@PathVariable int id, HttpServletRequest request, @AuthenticationPrincipal MyLoginUser myLoginUser) {
 
         // 모델 위임 (id로 board를 조회)
         // 권한 체크
         Board board = boardRepository.findById(id);
 
-        if (board.getUserId() != sessionUser.getId()) {
+        if (board.getUserId() != myLoginUser.getUser().getId()) {
             return "error/403";
         }
 
@@ -60,13 +57,12 @@ public class BoardController {
     }
 
     @PostMapping("/board/{id}/delete")
-    public String delete(@PathVariable int id, HttpServletRequest request) {
-        User sessionUser = (User) session.getAttribute("sessionUser");
+    public String delete(@PathVariable int id, HttpServletRequest request, @AuthenticationPrincipal MyLoginUser myLoginUser) {
 
         // 2. 권환 없으면 막기
         Board board = boardRepository.findById(id);
         // 작성자 id != 로그인한 사람의 id
-        if (board.getUserId() != sessionUser.getId()) {
+        if (board.getUserId() != myLoginUser.getUser().getId()) {
             request.setAttribute("status", 403);
             request.setAttribute("msg", "게시글을 삭제할 권한이 없습니다.");
             return "error/40x"; // 리다이렉트 하면 리퀘스트에 적은 내용이 사라진다.(하면 안된다)
@@ -78,9 +74,7 @@ public class BoardController {
     }
 
     @PostMapping("/board/save")
-    public String save(BoardRequest.SaveDTO requestDTO, HttpServletRequest request) {
-        // 1. 인증 체크
-        User sessionUser = (User) session.getAttribute("sessionUser");
+    public String save(BoardRequest.SaveDTO requestDTO, HttpServletRequest request, @AuthenticationPrincipal MyLoginUser myLoginUser) {
 
         // 2. 바디 데이터 확인 및 유효성 검사
         if (requestDTO.getTitle().length() > 30) {
@@ -91,7 +85,7 @@ public class BoardController {
 
         // 3. 모델에게 위임
         // insert into board_tb(title, content, user_id, create_at) values(?,?,? now())
-        boardRepository.save(requestDTO, sessionUser.getId());
+        boardRepository.save(requestDTO, myLoginUser.getUser().getId());
 
         return "redirect:/";
     }
@@ -108,32 +102,22 @@ public class BoardController {
 
     @GetMapping("/board/saveForm")
     public String saveForm() {
-
-        // 글쓰기 페이지 인증체크
-        User sessionUser = (User) session.getAttribute("sessionUser");
-
         return "board/saveForm";
     }
 
     @GetMapping("/board/{id}")
-    public String detail(@PathVariable int id, HttpServletRequest request) {
-
+    public String detail(@PathVariable int id, HttpServletRequest request, @AuthenticationPrincipal MyLoginUser myLoginUser) {
         // 1. 모델 진입 : 상세보기 데이터 가져오기
         // 바디 데이터가 없으면 유효성 검사가 필요없지 ㅎ
         BoardResponse.DetailDTO responseDTO = boardRepository.findByIdWithUser(id);
 
-        // 2. 페이지 주인 여부 체크 (board의 userId와 sessionUser의 id를 비교)
-        boolean pageOwner = false;
-        User sessionUser = (User) session.getAttribute("sessionUser");
-
-        // sessionUser을 비교해서 로그인 한 상태인지 확인 (로그인 안햇으면 null값일것)
-        // 이렇게 해야 상세보기 할 때 null들어가서 오류 나는거 막음
-        if (sessionUser != null) {
-            // sessionUser의 값이 null이 아닐 때 만 if문 동작시킴
-            // 비교하고자 하는 데이터의 값이 같은지 확인 하여야 한다.
-            if(sessionUser.getId() == responseDTO.getUserId()) {
-                pageOwner = true;
-            }
+        boolean pageOwner;
+        if (myLoginUser == null) {
+            pageOwner = false;
+        } else {
+            int 게시글작성자번호 = responseDTO.getUserId();
+            int 로그인한사람의번호 = myLoginUser.getUser().getId();
+            pageOwner = 게시글작성자번호 == 로그인한사람의번호;
         }
 
         request.setAttribute("board", responseDTO);

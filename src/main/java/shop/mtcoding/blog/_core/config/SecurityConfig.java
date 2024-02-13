@@ -1,26 +1,26 @@
 package shop.mtcoding.blog._core.config;
 
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.util.matcher.RegexRequestMatcher;
 
 @Configuration // 컴퍼넌트 스캔
 public class SecurityConfig {
 
     @Bean
     public BCryptPasswordEncoder encoder() {
-        return new BCryptPasswordEncoder();
+        return new BCryptPasswordEncoder(); // IOC 등록, 시큐리티가 고르인할때 어떤 해시로 비교해야하는지 알게됨
     }
 
     // configure 보다 먼저 적용됨
     // 이러면 저 url은 제외하고 configure가 실행됨
     @Bean
-    public WebSecurityCustomizer ignore() {
-        return w -> w.ignoring().requestMatchers("/board/*", "/static/**", "/h2-console/**");
+    public WebSecurityCustomizer ignore() { // 정적자원 시큐리티 폴더에서 제외시키기.
+        return w -> w.ignoring().requestMatchers("/static/**", "/h2-console/**");
     }
 
     @Bean
@@ -31,7 +31,8 @@ public class SecurityConfig {
         // 인증이 필요한 페이지 설정
         http.authorizeHttpRequests(a -> {
             // board/** = /board/{id}/delete 등을 모두 포함한다.
-            a.requestMatchers("/user/updateForm", "/board/**").authenticated()
+            a.requestMatchers(RegexRequestMatcher.regexMatcher("/board/\\d+")).permitAll()
+                    .requestMatchers("/user/**", "/board/**").authenticated()
                     .anyRequest().permitAll();
         });
 
