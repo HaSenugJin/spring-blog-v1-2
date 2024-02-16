@@ -4,12 +4,12 @@
 
     <!-- 수정삭제버튼 -->
     <div class="d-flex justify-content-end">
-        {{#pageOwner}}
+        {{#board.boardOwner}}
         <a href="/board/{{board.id}}/updateForm" class="btn btn-warning me-1">수정</a>
         <form action="/board/{{board.id}}/delete" method="post">
             <button class="btn btn-danger">삭제</button>
         </form>
-        {{/pageOwner}}
+        {{/board.boardOwner}}
     </div>
     <div class="d-flex justify-content-end">
         <b>작성자</b> : {{board.username}}
@@ -43,25 +43,19 @@
         </div>
         <div class="list-group">
             <!-- 댓글아이템 -->
+            {{#replyList}}
             <div class="list-group-item d-flex justify-content-between align-items-center">
                 <div class="d-flex">
-                    <div class="px-1 me-1 bg-primary text-white rounded">cos</div>
-                    <div>댓글 내용입니다</div>
+                    <div class="px-1 me-1 bg-primary text-white rounded">{{username}}</div>
+                    <div>{{comment}}</div>
                 </div>
-                <form action="/reply/1/delete" method="post">
-                    <button class="btn">🗑</button>
-                </form>
+                {{#replyOwner}}
+                    <form action="/reply/{{id}}/delete" method="post">
+                        <button class="btn">🗑</button>
+                    </form>
+                {{/replyOwner}}
             </div>
-            <!-- 댓글아이템 -->
-            <div class="list-group-item d-flex justify-content-between align-items-center">
-                <div class="d-flex">
-                    <div class="px-1 me-1 bg-primary text-white rounded">ssar</div>
-                    <div>댓글 내용입니다</div>
-                </div>
-                <form action="/reply/1/delete" method="post">
-                    <button class="btn">🗑</button>
-                </form>
-            </div>
+            {{/replyList}}
         </div>
     </div>
 </div>

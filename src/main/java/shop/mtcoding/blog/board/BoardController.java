@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import shop.mtcoding.blog.reply.ReplyRepository;
 import shop.mtcoding.blog.user.User;
 
 import java.util.List;
@@ -15,6 +16,7 @@ public class BoardController {
 
     private final BoardRepository boardRepository;
     private final HttpSession session;
+    private final ReplyRepository replyRepository;
 
     // @RequestBody BoardRequest.UpdateDTO : json데이터를 받을 수 있음
     // @RequestBody String : 평문
@@ -131,27 +133,15 @@ public class BoardController {
 
     @GetMapping("/board/{id}")
     public String detail(@PathVariable int id, HttpServletRequest request) {
-
-        // 1. 모델 진입 : 상세보기 데이터 가져오기
-        // 바디 데이터가 없으면 유효성 검사가 필요없지 ㅎ
-        BoardResponse.DetailDTO responseDTO = boardRepository.findByIdWithUser(id);
-
-        // 2. 페이지 주인 여부 체크 (board의 userId와 sessionUser의 id를 비교)
-        boolean pageOwner = false;
         User sessionUser = (User) session.getAttribute("sessionUser");
+        BoardResponse.DetailDTO boardDTO = boardRepository.findByIdWithUser(id);
+        boardDTO.isBoardOwner(sessionUser);
 
-        // sessionUser을 비교해서 로그인 한 상태인지 확인 (로그인 안햇으면 null값일것)
-        // 이렇게 해야 상세보기 할 때 null들어가서 오류 나는거 막음
-        if (sessionUser != null) {
-            // sessionUser의 값이 null이 아닐 때 만 if문 동작시킴
-            // 비교하고자 하는 데이터의 값이 같은지 확인 하여야 한다.
-            if(sessionUser.getId() == responseDTO.getUserId()) {
-                pageOwner = true;
-            }
-        }
+        List<BoardResponse.ReplyDTO> replyDTOList = replyRepository.findByBoardId(id, sessionUser);
 
-        request.setAttribute("board", responseDTO);
-        request.setAttribute("pageOwner", pageOwner);
+        request.setAttribute("replyList", replyDTOList);
+        request.setAttribute("board", boardDTO);
+
         return "board/detail";
     }
 }
