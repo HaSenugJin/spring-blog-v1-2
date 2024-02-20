@@ -3,6 +3,7 @@ package shop.mtcoding.blog.user;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -51,10 +52,17 @@ public class UserController {
         System.out.println(requestDTO); // toString -> @Data
 
         if(requestDTO.getUsername().length() < 3){
-            return "error/400"; // ViewResolver 설정이 되어 있음. (앞 경로, 뒤 경로)
+            throw new RuntimeException("유저네임 길이가 3자 이하면 안됩니다."); // ViewResolver 설정이 되어 있음. (앞 경로, 뒤 경로)
         }
 
-        User user = userRepository.findByUsernameAndPassword(requestDTO);
+        User user = userRepository.findByUsername(requestDTO.getUsername());
+
+        // 둘의 패스워드를 비교하여, 틀리면 출력
+        if(!BCrypt.checkpw(requestDTO.getPassword(), user.getPassword())) {
+            throw new RuntimeException("비밀번호가 틀렸습니다.");
+        }
+
+        // 맞다면 세션에 저장
         session.setAttribute("sessionUser", user); // 락카에 담음 (StateFul)
 
         return "redirect:/"; // 컨트롤러가 존재하면 무조건 redirect 외우기
@@ -63,6 +71,14 @@ public class UserController {
     @PostMapping("/join")
     public String join(UserRequest.JoinDTO requestDTO){
         System.out.println(requestDTO);
+
+        if(requestDTO.getUsername().length() < 3){
+            throw new RuntimeException("유저네임 길이가 3자 이하면 안됩니다."); // ViewResolver 설정이 되어 있음. (앞 경로, 뒤 경로)
+        }
+
+        String rawPassword = requestDTO.getPassword();
+        String encPassword = BCrypt.hashpw(rawPassword, BCrypt.gensalt());
+        requestDTO.setPassword(encPassword);
 
         try {
             userRepository.save(requestDTO);
