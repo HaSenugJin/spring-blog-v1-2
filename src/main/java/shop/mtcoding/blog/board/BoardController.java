@@ -149,9 +149,6 @@ public class BoardController {
             request.setAttribute("keyword", keyword);
         }
 
-        // 전체 페이지 개수
-
-
         return "index";
     }
 
