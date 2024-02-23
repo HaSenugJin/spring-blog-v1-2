@@ -8,9 +8,10 @@
     <div class="card">
         <div class="card-header"><b>회원가입을 해주세요</b></div>
         <div class="card-body">
-            <form action="/join" method="post" enctype="application/x-www-form-urlencoded">
+            <form action="/join" method="post" enctype="application/x-www-form-urlencoded" onsubmit="return valid()">
                 <div class="mb-3">
-                    <input type="text" class="form-control" placeholder="Enter username" name="username">
+                    <input id="username" type="text" class="form-control" placeholder="Enter username" name="username">
+                    <button onclick="check()" type="button" class="btn btn-warning">아이디 중복체크</button>
                 </div>
                 <div class="mb-3">
                     <input type="password" class="form-control" placeholder="Enter password" name="password">
@@ -23,5 +24,40 @@
         </div>
     </div>
 </div>
+
+<script>
+    let loginCheck = false;
+
+    function valid() {
+        if (loginCheck === false) {
+            alert("아이디 중복체크를 하여야 합니다.");
+        }
+        return loginCheck;
+    }
+
+    function check() {
+        let username = $("#username").val();
+
+        if (username == "") {
+            alert("아이디를 입력하여 주십시오.");
+        }
+
+        $.ajax({
+            url: "api/username-same-check?username=" + username,
+            type: "get"
+        }).done((res) => {
+            console.log(res);
+            if(res.body == true) {
+                alert("회원가입 가능");
+                loginCheck = true;
+            } else {
+                alert("아이디가 중복되었습니다.");
+                loginCheck = false;
+            }
+        }).fail((res) => {
+            alert(res.responseJSON.msg);
+        });
+    }
+</script>
 
 {{> layout/footer}}

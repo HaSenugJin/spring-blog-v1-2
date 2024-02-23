@@ -5,10 +5,8 @@ import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
+import shop.mtcoding.blog._core.util.ApiUtil;
 import shop.mtcoding.blog._core.util.Script;
 
 
@@ -20,12 +18,22 @@ public class UserController {
     private final UserRepository userRepository;
     private final HttpSession session;
 
+    @GetMapping("/api/username-same-check")
+    public @ResponseBody ApiUtil<?> usernameSameCheck(String username) {
+        User user = userRepository.findByUsername(username);
+
+        if (user == null) { // 회원가입 가능
+            return new ApiUtil<>(true);
+        } else { // 불가능
+            return new ApiUtil<>(false);
+        }
+    }
+
+
     @PostMapping("/user/update")
-    public String update(UserRequest.LoginDTO requestDTO, UserRequest.UpdateDTO updateDTO) {
+    public String update(UserRequest.UpdateDTO updateDTO) {
         User sessionUser = (User) session.getAttribute("sessionUser");
         userRepository.update(updateDTO, sessionUser.getId());
-//        User user = userRepository.findByUsernameAndPassword(requestDTO);
-//        session.setAttribute("sessionUser", user);
 
         return "redirect:/";
     }

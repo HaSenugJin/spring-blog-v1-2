@@ -49,10 +49,13 @@ public class UserRepository {
         query.setParameter(1, username);
 
         try {
+            //id를 찾으면 id를 반환
             User user = (User) query.getSingleResult();
             return user;
         } catch (Exception e) {
-            throw new RuntimeException("아이디를 찾을 수 없습니다.");
+
+            // id를 찾지 못하면 null을 반환
+            return null;
         }
     }
 
