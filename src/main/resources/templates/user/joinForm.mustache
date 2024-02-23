@@ -10,9 +10,9 @@
         <div class="card-body">
             <form action="/join" method="post" enctype="application/x-www-form-urlencoded" onsubmit="return valid()">
                 <div class="mb-3">
-                    <input id="username" type="text" class="form-control" placeholder="Enter username" name="username">
-                    <button onclick="check()" type="button" class="btn btn-warning">아이디 중복체크</button>
-                </div>
+                    <input onkeyup="check()" id="username" type="text" class="form-control" placeholder="Enter username" name="username">
+                    <span id="sn">아이디를 입력하여 주십시오</span>
+                </div>gi
                 <div class="mb-3">
                     <input type="password" class="form-control" placeholder="Enter password" name="password">
                 </div>
@@ -28,6 +28,8 @@
 <script>
     let loginCheck = false;
 
+
+
     function valid() {
         if (loginCheck === false) {
             alert("아이디 중복체크를 하여야 합니다.");
@@ -37,21 +39,17 @@
 
     function check() {
         let username = $("#username").val();
-
-        if (username == "") {
-            alert("아이디를 입력하여 주십시오.");
-        }
+        const ele = document.getElementById('sn');
 
         $.ajax({
             url: "api/username-same-check?username=" + username,
             type: "get"
         }).done((res) => {
-            console.log(res);
             if(res.body == true) {
-                alert("회원가입 가능");
+                ele.innerHTML = `<span id = "sn">중복된 아이디가 없습니다.</span>`;
                 loginCheck = true;
             } else {
-                alert("아이디가 중복되었습니다.");
+                ele.innerHTML = `<span id = "sn">아이디가 중복되었습니다.</span>`;
                 loginCheck = false;
             }
         }).fail((res) => {
