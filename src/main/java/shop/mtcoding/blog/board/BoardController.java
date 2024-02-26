@@ -5,6 +5,8 @@ import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import shop.mtcoding.blog.love.LoveRepository;
+import shop.mtcoding.blog.love.LoveResponse;
 import shop.mtcoding.blog.reply.ReplyRepository;
 import shop.mtcoding.blog.user.User;
 
@@ -17,6 +19,7 @@ public class BoardController {
     private final BoardRepository boardRepository;
     private final HttpSession session;
     private final ReplyRepository replyRepository;
+    private final LoveRepository loveRepository;
 
     // @RequestBody BoardRequest.UpdateDTO : json데이터를 받을 수 있음
     // @RequestBody String : 평문
@@ -171,9 +174,11 @@ public class BoardController {
         boardDTO.isBoardOwner(sessionUser);
 
         List<BoardResponse.ReplyDTO> replyDTOList = replyRepository.findByBoardId(id, sessionUser);
-
         request.setAttribute("replyList", replyDTOList);
         request.setAttribute("board", boardDTO);
+
+        LoveResponse.DetailDTO loveDetailDTO = loveRepository.findLove(id, sessionUser.getId());
+        request.setAttribute("love", loveDetailDTO);
 
         return "board/detail";
     }

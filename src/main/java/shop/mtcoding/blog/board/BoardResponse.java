@@ -1,6 +1,5 @@
 package shop.mtcoding.blog.board;
 
-import jakarta.servlet.http.HttpSession;
 import lombok.Data;
 import shop.mtcoding.blog.user.User;
 
