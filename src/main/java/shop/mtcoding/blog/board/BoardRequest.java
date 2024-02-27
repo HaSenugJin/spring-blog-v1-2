@@ -8,6 +8,7 @@ public class BoardRequest {
     public static class SaveDTO {
         private String title;
         private String content;
+
     }
 
     @Data
