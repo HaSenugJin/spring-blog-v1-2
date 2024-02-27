@@ -4,11 +4,32 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @RequiredArgsConstructor
 @Repository
 public class LoveRepository {
     private final EntityManager em;
+
+    public Love findById(int id) {
+        Query query = em.createNativeQuery("select * from love_tb where id = ?", Love.class);
+        query.setParameter(1, id);
+
+        Love love = (Love) query.getSingleResult();
+        return love;
+    }
+
+    @Transactional
+    public void deleteById(int id) {
+        Query query = em.createNativeQuery("delete from love_tb where id = ?");
+        query.setParameter(1, id);
+
+        query.executeUpdate();
+    }
+
+
+
 
     public LoveResponse.DetailDTO findLove(int boardId) {
         String q = """
@@ -74,6 +95,20 @@ public class LoveRepository {
         LoveResponse.DetailDTO responseDTO = new LoveResponse.DetailDTO(
                 id, isLove, loveCount
         );
+
         return responseDTO;
+    }
+
+    @Transactional
+    public Love save(@RequestBody LoveRequest.SaveDTO requestDTO, int sessionUserId) {
+        Query query = em.createNativeQuery("insert into love_tb(board_id, user_id, created_at) values(?,?, now())");
+        query.setParameter(1, requestDTO.getBoardId());
+        query.setParameter(2, sessionUserId);
+
+        query.executeUpdate();
+
+        Query q = em.createNativeQuery("select * from love_tb where id = (select max(id) from love_tb)", Love.class);
+        Love love = (Love) q.getSingleResult();
+        return love;
     }
 }
