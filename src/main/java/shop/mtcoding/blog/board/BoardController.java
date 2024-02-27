@@ -174,11 +174,20 @@ public class BoardController {
         boardDTO.isBoardOwner(sessionUser);
 
         List<BoardResponse.ReplyDTO> replyDTOList = replyRepository.findByBoardId(id, sessionUser);
-        request.setAttribute("replyList", replyDTOList);
         request.setAttribute("board", boardDTO);
+        request.setAttribute("replyList", replyDTOList);
 
-        LoveResponse.DetailDTO loveDetailDTO = loveRepository.findLove(id, sessionUser.getId());
-        request.setAttribute("love", loveDetailDTO);
+        if(sessionUser == null){
+            LoveResponse.DetailDTO loveDetailDTO = loveRepository.findLove(id);
+            request.setAttribute("love", loveDetailDTO);
+        }else{
+            LoveResponse.DetailDTO loveDetailDTO = loveRepository.findLove(id, sessionUser.getId());
+            request.setAttribute("love", loveDetailDTO);
+        }
+
+        // fas fa-heart text-danger
+        // far fa-heart
+        // request.setAttribute("css", "far fa-heart");
 
         return "board/detail";
     }
